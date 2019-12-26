@@ -10,12 +10,13 @@ class Bet:
         self.bet2=bet2
         self.bet3=bet3
 teams=['Arsenal','Liverpool','ManchesterCity','Leicester','Chelesea','Totenham','Brighton' , 'Everton','Shefield','Wolves','Burnley','Newcastle','Watford','Norwich']
-i=0
-
-initalmatch=[]
+initalmatch = []
 updatedmatch=[]
-def writeinFile():
+result={}   
+def writeInFile():
+    global initalmatch
     f=open("meciuri.txt","w+")
+    i=0
     while i<elements:
         i=i+1
         home=randint(1,13)
@@ -28,18 +29,23 @@ def writeinFile():
         bet=teams[home] +" "+teams[away] + " " + str(bet1) +" "+str(bet2)+" "+ str(bet3) +"\n"
         f.write(bet)
     f.close()
-writeinFile()
-print('==========')
-f=open("meciuri.txt","r")
 def split(line):
+    global updatedmatch
     sp=line.split(" ");
     matchupdated=Bet(sp[0],sp[1],uniform(1,5),uniform(1,5),uniform(1,5))
     updatedmatch.append(matchupdated)
-    newbet=sp[0]+" "+ sp[1] + " " +str(uniform(1,5))+" " +str(uniform(1,5))+" " +str(uniform(1,5))
+    newbet=sp[0]+" "+ sp[1] + " " +str(uniform(1,5))+" " +str(uniform(1,5))+" " +str(uniform(1,5))+"\n"
     return newbet
-   
-for line in f:
-    split(line)
+def readAndSplit():
+    mUp=[]
+    f=open("meciuri.txt","r")
+    for line in f:
+        mUp.append(split(line))
+    f.close()
+    f=open("meciuri.txt","w+")
+    for meci in mUp:
+        f.write(meci)
+    f.close()
 def pronostic(value,el1,el2,el3):
     pron=''
     if(value==el1 and el1 > 0):
@@ -49,8 +55,8 @@ def pronostic(value,el1,el2,el3):
     if(value==el3 and el3 >0 ):
         pron='2'
     return pron
-result={}   
 def compare(initalmatch,updatedmatch):
+ 
     for i in range(elements):
         el1=initalmatch[i].bet1-updatedmatch[i].bet1
         el2=initalmatch[i].bet2-updatedmatch[i].bet2
@@ -58,14 +64,30 @@ def compare(initalmatch,updatedmatch):
         value=max(el1,el2,el3)
         pron=pronostic(value,el1,el2,el3)
         result.update({value:pron})
-       
-compare(initalmatch,updatedmatch)
 def safeBet(result):
+   global initalmatch
    temp=max(result.keys())
    ind=list(result.items())
    res=[idx for idx, key in enumerate(ind) if key[0] == temp]
    index=res[0]
    concatMatch=initalmatch[index].home + " " +initalmatch[index].away+" ==>" +result.get(temp)
    print(concatMatch)
-   
-safeBet(result)
+writeInFile()
+def reset():
+    global initalmatch
+    global updatedmatch
+    global result
+    result={}
+    initalmatch=[]
+    for el in updatedmatch:
+        initalmatch.append(el)
+    updatedmatch=[]
+def doSomething():
+    readAndSplit()
+    compare(initalmatch,updatedmatch)
+    safeBet(result)
+    reset()
+schedule.every(10).seconds.do(doSomething)
+while 1:
+    schedule.run_pending()
+    time.sleep(1)
